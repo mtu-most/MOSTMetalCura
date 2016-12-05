@@ -18,7 +18,9 @@
           "default": 7.0
         },
         "machine_layer_pause": { "default": true },
-        "machine_layer_pause_gcode": { "default": "G4 P60000\n" },
+        "machine_layer_pause_gcode": { "default": "G4 P" },
+        "machine_layer_pause_time": { "default": 60000 },
+        "machine_layer_pause_increase": { "default": 20 },
 
         "machine_width": { "default": 230 },
         "machine_depth": { "default": 225 },

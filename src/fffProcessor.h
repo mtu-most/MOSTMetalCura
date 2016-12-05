@@ -701,6 +701,10 @@ private:
                 gcodeLayer.writeGCode(false, getSettingInMicrons("raft_interface_thickness"));
             }
         }
+        //@ add vairables for pause time between layers
+        double pauseTime = INT2MM(getSettingInMicrons("machine_layer_pause_time"));
+        double pauseIncrease = INT2MM(getSettingInMicrons("machine_layer_pause_increase"));
+        std::string pauseGcode = getSettingString("machine_layer_pause_gcode");
 
         for(unsigned int layer_nr=0; layer_nr<totalLayers; layer_nr++)
         {
@@ -839,7 +843,14 @@ private:
                 //@ turn off the welder
                 gcode.writeCode(getSettingString("machine_welder_off_gcode").c_str());
                 //@ pause the pringting
-                gcode.writeCode(getSettingString("machine_layer_pause_gcode").c_str());
+                std::string tempGcode;
+                double tempPauseTime;
+                std::ostringstream temp;
+                tempPauseTime = pauseTime + (pauseTime*(pauseIncrease/100)*layer_nr);
+                temp << (int)tempPauseTime << "\n";
+                tempGcode = pauseGcode + temp.str();
+
+                gcode.writeCode(tempGcode.c_str());
                 //@ set that the welder is off
                 gcode.setIsWelding(false);
             }
