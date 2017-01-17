@@ -268,6 +268,7 @@ private:
             storage.meshes.emplace_back(&object->meshes[meshIdx]);
             SliceMeshStorage& meshStorage = storage.meshes[meshIdx];
             createLayerParts(meshStorage, slicerList[meshIdx], meshStorage.settings->getSettingBoolean("meshfix_union_all"), meshStorage.settings->getSettingBoolean("meshfix_union_all_remove_holes"));
+            //@createLayerParts(meshStorage, slicerList[meshIdx], true, meshStorage.settings->getSettingBoolean("meshfix_union_all_remove_holes"));
             delete slicerList[meshIdx];
 
             bool has_raft = meshStorage.settings->getSettingAsPlatformAdhesion("adhesion_type") == Adhesion_Raft;
@@ -570,8 +571,8 @@ private:
             //@ add line_width and layer_height to the gcode output
             gcode.writeComment("////////////////////////////////////////");
             std::string tempString;
-            tempString = getSettingString("infill_line_width");
-            gcode.writeComment("Infill line width: " + tempString + " mm.");
+            tempString = getSettingString("skin_line_width");
+            gcode.writeComment("Line width: " + tempString + " mm.");
             tempString = getSettingString("layer_height");
             gcode.writeComment("Layer height: " + tempString + " mm.");
             tempString = getSettingString("speed_print");
@@ -582,16 +583,17 @@ private:
             double lineWidth = INT2MM(getSettingInMicrons("infill_line_width"));
             double layerHeight = INT2MM(getSettingInMicrons("layer_height"));
             double speedPrint = INT2MM(getSettingInMicrons("speed_print"));
-            double expectedMM3PerSec = lineWidth * layerHeight/2.0 * speedPrint;
+            double expectedMM3PerSec = lineWidth * layerHeight * speedPrint;
             double materialDiameter = INT2MM(getSettingInMicrons("material_diameter"));
             double crossSectionalArea = M_PI*(materialDiameter/2.0)*(materialDiameter/2.0);
             double wireSpeed;
             double wireMMPerSec;
-            for(int i=1;i<=10000;i++){
+            for(int i=1;i<=100;i++){
                 //@ this equation only for Millermatic 190
-                wireMMPerSec = 0.0254 * (0.45*i/100.0+20.5) * i/100.0;
+                //@ wireMMPerSec = 0.0254 * (0.45*i/100.0+20.5) * i/100.0;
+                wireMMPerSec = (2.216*i)-19;
                 if ((crossSectionalArea*wireMMPerSec) < expectedMM3PerSec){
-                    wireSpeed = i/100.0;
+                    wireSpeed = i;
                 }
                 else {
                     break;
@@ -604,10 +606,18 @@ private:
             gcode.writeComment("////////////////////////////////////////");
             gcode.writeComment("Recommended welder (Millermatic 190) settings");
             gcode.writeComment("Voltage: 5 volts");
-            std::ostringstream tempStr;
-            tempStr << wireSpeed << " - " << (wireSpeed + 2.0);
-            gcode.writeComment("Wire speed: " + tempStr.str());
+            if (wireSpeed >=10)
+            {
+                std::ostringstream tempStr;
+                tempStr << (wireSpeed - 2.0) << " - " << (wireSpeed + 2.0);
+                gcode.writeComment("Wire speed: " + tempStr.str());
+            }
+            else
+            {
+                gcode.writeComment("Wire speed: <10 (Cannot be set!)");
+            }
             gcode.writeComment("////////////////////////////////////////\n");
+
 
             if (gcode.getFlavor() == GCODE_FLAVOR_BFB)
             {
@@ -633,6 +643,7 @@ private:
         bool has_raft = getSettingAsPlatformAdhesion("adhesion_type") == Adhesion_Raft;
         if (has_raft)
         {
+            //printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!enter has_raft"); //@ for test.
             GCodePathConfig raft_base_config(&storage.retraction_config, "SUPPORT");
             raft_base_config.setSpeed(getSettingInMillimetersPerSecond("raft_base_speed"));
             raft_base_config.setLineWidth(getSettingInMicrons("raft_base_linewidth"));
@@ -791,6 +802,7 @@ private:
 
             if (storage.oozeShield.size() > 0)
             {
+                //printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!enter storage oozeShield size > 0"); //@ for test.
                 gcodeLayer.setAlwaysRetract(true);
                 gcodeLayer.addPolygonsByOptimizer(storage.oozeShield[layer_nr], &storage.skirt_config);
                 gcodeLayer.setAlwaysRetract(!getSettingBoolean("retraction_combing"));
@@ -834,7 +846,7 @@ private:
                 }
                 gcode.writeFanCommand(fanSpeed);
             }
-
+            //@ start write GCode for each layer
             gcodeLayer.writeGCode(getSettingBoolean("cool_lift_head"), layer_nr > 0 || getSettingAsPlatformAdhesion("adhesion_type") == Adhesion_Raft? getSettingInMicrons("layer_height") : getSettingInMicrons("layer_height_0"));
             if (commandSocket)
                 commandSocket->sendGCodeLayer();
@@ -908,6 +920,7 @@ private:
     //Add a single layer from a single mesh-volume to the GCode
     void addMeshLayerToGCode(SliceDataStorage& storage, SliceMeshStorage* mesh, GCodePlanner& gcodeLayer, int layer_nr)
     {
+        //printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!enter addMeshLayerToGCode function"); //@ for test.
         int prevExtruder = gcodeLayer.getExtruder();
         bool extruder_changed = gcodeLayer.setExtruder(mesh->settings->getSettingAsIndex("extruder_nr"));
 
@@ -918,6 +931,7 @@ private:
 
         if (getSettingBoolean("magic_polygon_mode"))
         {
+            //printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!enter magic_polygon_mode"); //@ for test.
             Polygons polygons;
             for(unsigned int partNr=0; partNr<layer->parts.size(); partNr++)
             {
@@ -983,6 +997,7 @@ private:
             double infill_overlap = getSettingInPercentage("fill_overlap");
             if (sparse_infill_line_distance > 0)
             {
+                //printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!enter spare_infill_line_distance greater than zero"); //@ for test.
                 //Print the thicker sparse lines first. (double or more layer thickness, infill combined with previous layers)
                 for(unsigned int n=1; n<part->sparse_outline.size(); n++)
                 {
@@ -1022,6 +1037,7 @@ private:
             Polygons infillLines;
             if (sparse_infill_line_distance > 0 && part->sparse_outline.size() > 0)
             {
+                //printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!enter infillPolygons"); //@ for test.
                 switch(getSettingAsFillMethod("fill_pattern"))
                 {
                 case Fill_Grid:
@@ -1053,6 +1069,7 @@ private:
             {
                 if (getSettingBoolean("magic_spiralize"))
                 {
+                    //printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!enter magic_spiralize"); //@ for test.
                     if (static_cast<int>(layer_nr) >= getSettingAsCount("bottom_layers"))
                         mesh->inset0_config.spiralize = true;
                     if (static_cast<int>(layer_nr) == getSettingAsCount("bottom_layers") && part->insets.size() > 0)
@@ -1100,6 +1117,7 @@ private:
                         break;
                     case Fill_Concentric:
                         {
+                            //printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!enter skinPolygons Fill_Concentric"); //@ for test.
                             Polygons in_outline;
                             offsetSafe(skin_part.outline, -extrusionWidth/2, extrusionWidth, in_outline, getSettingBoolean("wall_overlap_avoid_enabled"));
                             if (getSettingString("fill_perimeter_gaps") != "Nowhere")
