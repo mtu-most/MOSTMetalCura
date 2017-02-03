@@ -15,7 +15,12 @@
           "default": "G4 P0\nM42 P1 S0\n"
         },
         "machine_min_dist_welder_off": {
+          "unit": "mm",
           "default": 7.0
+        },
+        "machine_up_layer_end": {
+          "unit": "mm",
+          "default": 10.0
         },
         "machine_layer_pause": { "default": true },
         "machine_layer_pause_gcode": { "default": "G4 P" },

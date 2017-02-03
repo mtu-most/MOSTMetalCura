@@ -27,6 +27,8 @@
 #include "Weaver.h"
 #include "Wireframe2gcode.h"
 #include "utils/polygonUtils.h"
+//@ std::setprecision
+#include <iomanip>
 
 namespace cura {
 
@@ -716,6 +718,12 @@ private:
         double pauseTime = INT2MM(getSettingInMicrons("machine_layer_pause_time"));
         double pauseIncrease = INT2MM(getSettingInMicrons("machine_layer_pause_increase"));
         std::string pauseGcode = getSettingString("machine_layer_pause_gcode");
+        //@ add variable for move the printer head up at the end of each layer
+        double upLayerEnd = INT2MM(getSettingInMicrons("machine_up_layer_end"));
+        //@ welder off gcode
+        std::string welderOffGCode = getSettingString("machine_welder_off_gcode");
+        //@ boolean layer pause
+        bool layerPause = getSettingBoolean("machine_layer_pause");
 
         for(unsigned int layer_nr=0; layer_nr<totalLayers; layer_nr++)
         {
@@ -851,9 +859,18 @@ private:
             if (commandSocket)
                 commandSocket->sendGCodeLayer();
             //@ add pause to each layer
-            if (getSettingBoolean("machine_layer_pause")){
+            if (layerPause){
                 //@ turn off the welder
-                gcode.writeCode(getSettingString("machine_welder_off_gcode").c_str());
+                //gcode.writeCode(getSettingString("machine_welder_off_gcode").c_str());
+                gcode.writeCode(welderOffGCode.c_str());
+                //@ move printer head up in mm unit
+                std::string tempUpLayerEnd;
+                std::ostringstream tempUp;
+                double upZ = INT2MM(gcode.getPositionZ()) + upLayerEnd;
+                //tempUp.precision(3);
+                tempUp << std::fixed << std::setprecision(3) << "G0 Z" << upZ << "\n";
+                tempUpLayerEnd = tempUp.str();
+                gcode.writeCode(tempUpLayerEnd.c_str());
                 //@ pause the pringting
                 std::string tempGcode;
                 double tempPauseTime;
