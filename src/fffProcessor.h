@@ -868,7 +868,7 @@ private:
                 std::ostringstream tempUp;
                 double upZ = INT2MM(gcode.getPositionZ()) + upLayerEnd;
                 //tempUp.precision(3);
-                tempUp << std::fixed << std::setprecision(3) << "G0 Z" << upZ << "\n";
+                tempUp << std::fixed << std::setprecision(3) << ";Move print head up\nG0 Z" << upZ << "\n";
                 tempUpLayerEnd = tempUp.str();
                 gcode.writeCode(tempUpLayerEnd.c_str());
                 //@ pause the pringting
