@@ -66,6 +66,8 @@ int main(int argc, char **argv)
     std::vector<std::string> files;
 
     logCopyright("Cura_SteamEngine version %s\n", VERSION);
+    logCopyright("Copyright (C) 2017 Yuenyong Nilsiam\n");
+    logCopyright("based on\n");
     logCopyright("Copyright (C) 2014 David Braam\n");
     logCopyright("\n");
     logCopyright("This program is free software: you can redistribute it and/or modify\n");
@@ -182,7 +184,7 @@ int main(int argc, char **argv)
             logError("ERROR: Failed to load json file: fdmprinter.json\n");
         }
     }
-        
+
     if(commandSocket)
     {
         commandSocket->connect(ip, port);
@@ -205,6 +207,6 @@ int main(int argc, char **argv)
         //Finalize the processor, this adds the end.gcode. And reports statistics.
         processor.finalize();
     }
-    
+
     return 0;
 }
