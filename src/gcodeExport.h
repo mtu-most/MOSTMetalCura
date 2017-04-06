@@ -1,3 +1,5 @@
+/** Copyright (C) 2017 Yuenyong Nilsiam */
+/** based on */
 /** Copyright (C) 2013 David Braam - Released under terms of the AGPLv3 License */
 #ifndef GCODEEXPORT_H
 #define GCODEEXPORT_H
